@@ -60,7 +60,7 @@
 
 <div class="container">
     <div class="navbar">
-        <div style="font-weight: 800; color: var(--gold);"><i class="fa-solid fa-fish"></i> LE LANG ROD REALTIME</div>
+        <div style="font-weight: 800; color: var(--gold);"><i class="fa-solid fa-fish"></i> LELANG ROD REALTIME PRO</div>
         <button class="btn-sm" style="border-color: var(--gold); color: var(--gold);" onclick="loginAdmin()">Panel Control Admin</button>
     </div>
 
@@ -81,7 +81,7 @@
         <p style="color: #8d99ae; font-size: 0.85rem; margin-top: 5px;">Kondisi Perfect | Rarity Mythic | Anti Scam Protection</p>
     </div>
 
-    <!-- KANAN: LE LANG REALTIME -->
+    <!-- KANAN: LELANG REALTIME -->
     <div class="card">
         <div class="timer-box">
             <small style="color: #8d99ae;">SISA WAKTU (SINKRON GLOBAL)</small>
@@ -128,29 +128,23 @@
 </div>
 
 <script>
-    // 1. CONFIG FIREBASE (Ganti dengan konfigurasi Firebase milik Anda)
+    // 1. TERHUBUNG LANGSUNG KE FIREBASE DATABASE MILIK ANDA
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-        projectId: "YOUR_PROJECT",
-        storageBucket: "YOUR_PROJECT.appspot.com",
-        messagingSenderId: "YOUR_SENDER_ID",
-        appId: "YOUR_APP_ID"
+        databaseURL: "https://projeklelang-1e39d-default-rtdb.firebaseio.com"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // SPREADSHEET URL (Ganti dengan URL Google Apps Script Anda)
-    const SPREADSHEET_WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+    // 2. TERHUBUNG LANGSUNG KE SPREADSHEET (GOOGLE APPS SCRIPT) MILIK ANDA
+    const SPREADSHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxwOwomSE_JOfcs5mNNdGfPQ1A3nDaVgcuGAivLihP9TXTYXFTVC_LJQUGYzvkG9LoO/exec";
 
     let currentUser = null;
     let targetEndTime = 0;
-    let highestAmount = 500000;
+    let highestAmount = 25000;
     let isAdmin = false;
 
-    // LISTEN DATA REALTIME FIREBASE
+    // LISTEN DATA REALTIME FIREBASE (SINKRON TERTINGGI & TIMER)
     db.ref('auction_state').on('value', snapshot => {
         const data = snapshot.val();
         if(!data) return;
@@ -166,7 +160,7 @@
         }
     });
 
-    // LISTEN HISTORY BID & BAD-ACTOR KICK REALTIME
+    // LISTEN RIWAYAT BID & FITUR KICK PLAYER SCAM
     db.ref('bids').on('value', snapshot => {
         const list = document.getElementById("historyList");
         list.innerHTML = "";
@@ -181,7 +175,7 @@
             
             let kickBtnHTML = "";
             if(isAdmin) {
-                // Admin bisa lihat data asli walau anonim & tombol Kick
+                // Admin bisa melihat nama asli walau anonim & ada tombol Kick
                 kickBtnHTML = `<button onclick="kickPlayer('${key}')" style="background:red; color:white; border:none; padding:3px 6px; border-radius:4px; font-size:0.7rem; cursor:pointer; margin-left:5px;">Kick Bid</button>`;
             }
 
@@ -212,10 +206,10 @@
         document.getElementById("timer").innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     }, 1000);
 
-    // VERIFIKASI USER ROBLOX
+    // VERIFIKASI ROBLOX PLAYER
     function verifyPlayer() {
         const val = document.getElementById("robloxInput").value.trim();
-        if(!val) { alert("Masukkan Username atau Scan Profil Roblox!"); return; }
+        if(!val) { alert("Masukkan Username atau Link Profil Roblox!"); return; }
 
         currentUser = {
             username: val,
@@ -227,6 +221,7 @@
         document.getElementById("bidAmountInput").value = highestAmount + 10000;
     }
 
+    // REGULASI TAMBAH / KURANG BID
     function adjustAmount(val) {
         let current = parseInt(document.getElementById("bidAmountInput").value) || highestAmount;
         let res = current + val;
@@ -234,7 +229,7 @@
         document.getElementById("bidAmountInput").value = res;
     }
 
-    // SUBMIT BID REALTIME
+    // MENGIRIM PENAWARAN (BID)
     function submitBid() {
         if(!currentUser) return;
         const amount = parseInt(document.getElementById("bidAmountInput").value);
@@ -252,34 +247,32 @@
             timestamp: Date.now()
         };
 
-        // 1. Save to Firebase Realtime
+        // 1. Simpan ke Firebase Realtime Database Anda
         db.ref('bids').push(bidData);
         db.ref('auction_state').update({
             highestAmount: amount,
             highestBidder: bidData
         });
 
-        // 2. Save to Google Sheets (Rekap War Bid)
-        if(SPREADSHEET_WEB_APP_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
-            fetch(SPREADSHEET_WEB_APP_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bidData)
-            });
-        }
+        // 2. Rekap Otomatis ke Google Spreadsheet Anda
+        fetch(SPREADSHEET_WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bidData)
+        });
 
         alert("Penawaran Berhasil Dikirim!");
     }
 
-    // ADMIN CONTROL REALTIME
+    // PANEL ADMIN / KONTROL OWNER
     function loginAdmin() {
         const pin = prompt("Masukkan PIN Admin:");
-        if(pin === "1234") {
+        if(pin === "3241") {
             isAdmin = true;
             document.getElementById("adminPanel").classList.add("active");
-            alert("Login Admin Berhasil! Anda memiliki kontrol penuh.");
-            db.ref('bids').get(); // Refresh UI
+            alert("Login Admin Berhasil!");
+            db.ref('bids').get(); // Refresh tampilan
         } else {
             alert("PIN Salah!");
         }
@@ -298,7 +291,7 @@
     }
 
     function kickPlayer(bidKey) {
-        if(confirm("Tendang player/hapus penawaran scam ini?")) {
+        if(confirm("Tendang player/hapus penawaran scam ini secara realtime?")) {
             db.ref(`bids/${bidKey}`).remove();
         }
     }
