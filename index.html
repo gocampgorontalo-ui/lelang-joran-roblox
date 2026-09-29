@@ -3,560 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rod Auction Showcase - Roblox Verified</title>
+    <title>Rod Auction Pro - Realtime Verified</title>
     
-    <!-- Google Fonts & Font Awesome Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Firebase SDK (Realtime Database) -->
+    <!-- Firebase Realtime SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
         :root {
-            --bg-color: #0d0f17;
-            --card-bg: #161926;
-            --accent-gold: #ffb703;
-            --accent-green: #00f5d4;
-            --accent-blue: #3a86ff;
-            --accent-red: #ff0055;
-            --text-main: #f8f9fa;
-            --text-muted: #8d99ae;
-            --border-color: rgba(255, 255, 255, 0.08);
+            --bg: #0d0f17;
+            --card: #161926;
+            --gold: #ffb703;
+            --green: #00f5d4;
+            --red: #ff0055;
+            --blue: #3a86ff;
+            --border: rgba(255, 255, 255, 0.08);
         }
 
-        * {
-            box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg); color: #fff; padding: 20px 10px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 1100px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 20px 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+        .navbar { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; background: var(--card); padding: 15px 20px; border-radius: 12px; border: 1px solid var(--border); }
+        .card { background: var(--card); border-radius: 16px; padding: 20px; border: 1px solid var(--border); position: relative; }
 
-        .container {
-            width: 100%;
-            max-width: 1100px;
-            display: grid;
-            grid-template-columns: 1.2fr 1fr;
-            gap: 25px;
-        }
+        .timer-box { background: #1a1d2e; border: 1px solid var(--border); padding: 15px; text-align: center; border-radius: 12px; margin-bottom: 15px; }
+        .timer-val { font-size: 2rem; font-weight: 800; color: var(--green); }
 
-        @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; }
-        }
+        .price-box { background: rgba(0, 245, 212, 0.05); border: 1px solid rgba(0, 245, 212, 0.2); text-align: center; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .price-val { font-size: 2.2rem; font-weight: 800; color: var(--green); }
 
-        /* HEADER & NAVBAR */
-        .navbar {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--card-bg);
-            padding: 15px 25px;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-        }
+        .verify-card { background: rgba(58, 134, 255, 0.05); border: 1px dashed var(--blue); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px; }
+        
+        input[type="text"], input[type="number"] { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: #0a0c14; color: #fff; margin-bottom: 10px; }
+        
+        .btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn-blue { background: var(--blue); color: #fff; }
+        .btn-green { background: var(--green); color: #000; }
+        .btn-red { background: var(--red); color: #fff; }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 1.2rem;
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            color: var(--accent-gold);
-        }
+        .bid-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+        .btn-sm { padding: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
 
-        .btn-owner-login {
-            background: rgba(255, 183, 3, 0.1);
-            color: var(--accent-gold);
-            border: 1px solid var(--accent-gold);
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+        .history-list { list-style: none; max-height: 200px; overflow-y: auto; margin-top: 10px; }
+        .history-item { background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; margin-bottom: 5px; display: flex; justify-content: space-between; font-size: 0.85rem; border: 1px solid var(--border); align-items: center; }
 
-        .btn-owner-login:hover {
-            background: var(--accent-gold);
-            color: #000;
-        }
-
-        /* CARD LEFT: GALLERY & SPECS */
-        .card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid var(--border-color);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .badge-rarity {
-            position: absolute;
-            top: 35px;
-            left: 35px;
-            background: linear-gradient(135deg, #ff007f, #7928ca);
-            color: #fff;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            z-index: 2;
-        }
-
-        .main-img-container {
-            width: 100%;
-            height: 320px;
-            border-radius: 14px;
-            overflow: hidden;
-            background: #000;
-            margin-bottom: 15px;
-            position: relative;
-        }
-
-        .main-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: 0.3s;
-        }
-
-        .gallery-thumbs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .thumb {
-            width: 70px;
-            height: 60px;
-            border-radius: 8px;
-            object-fit: cover;
-            cursor: pointer;
-            border: 2px solid transparent;
-            opacity: 0.6;
-            transition: 0.3s;
-        }
-
-        .thumb.active, .thumb:hover {
-            border-color: var(--accent-gold);
-            opacity: 1;
-        }
-
-        .product-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-        }
-
-        .specs-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .spec-item {
-            background: rgba(255,255,255,0.03);
-            padding: 10px 14px;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .spec-item i { color: var(--accent-gold); margin-right: 6px; }
-
-        /* CARD RIGHT: BID SYSTEM & TIMER */
-        .timer-banner {
-            background: linear-gradient(135deg, #1d2133, #252a40);
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            border: 1px solid var(--border-color);
-            margin-bottom: 20px;
-        }
-
-        .timer-digits {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--accent-green);
-            letter-spacing: 2px;
-            margin-top: 5px;
-        }
-
-        .price-box {
-            background: rgba(0, 245, 212, 0.05);
-            border: 1px solid rgba(0, 245, 212, 0.2);
-            border-radius: 14px;
-            padding: 18px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .price-amount {
-            font-size: 2.2rem;
-            font-weight: 800;
-            color: var(--accent-green);
-        }
-
-        .verify-box {
-            background: rgba(58, 134, 255, 0.08);
-            border: 1px dashed var(--accent-blue);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 12px 15px;
-            border-radius: 10px;
-            border: 1px solid var(--border-color);
-            background: #0f111a;
-            color: #fff;
-            outline: none;
-        }
-
-        input:focus { border-color: var(--accent-blue); }
-
-        .quick-bids {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .btn-quick {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            color: #fff;
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            font-weight: 600;
-        }
-
-        .btn-quick:hover { background: rgba(255, 255, 255, 0.15); }
-
-        .btn-action {
-            width: 100%;
-            background: linear-gradient(135deg, var(--accent-blue), #2a6fdb);
-            color: #fff;
-            border: none;
-            padding: 14px;
-            border-radius: 10px;
-            font-weight: 800;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: 0.3s;
-        }
-
-        .btn-action:hover { opacity: 0.9; }
-
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            margin-bottom: 15px;
-            color: var(--text-muted);
-        }
-
-        /* HISTORY */
-        .history-list {
-            list-style: none;
-            max-height: 180px;
-            overflow-y: auto;
-            margin-top: 15px;
-        }
-
-        .history-item {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 10px 12px;
-            border-radius: 8px;
-            margin-bottom: 6px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        /* OWNER DASHBOARD PANEL (HIDDEN BY DEFAULT) */
-        .owner-panel {
-            grid-column: 1 / -1;
-            background: #1e130c;
-            border: 1px solid var(--accent-gold);
-            border-radius: 16px;
-            padding: 20px;
-            display: none;
-        }
-
-        .owner-panel.active { display: block; }
-
-        .owner-controls {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        .btn-owner-action {
-            background: var(--accent-gold);
-            color: #000;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-        }
+        .admin-panel { grid-column: 1 / -1; background: #201216; border: 1px solid var(--red); padding: 15px; border-radius: 12px; display: none; margin-bottom: 10px; }
+        .admin-panel.active { display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- NAVBAR -->
     <div class="navbar">
-        <div class="brand">
-            <i class="fa-solid fa-fish-fins"></i>
-            <span>ROD AUCTION PRO</span>
-        </div>
-        <button class="btn-owner-login" onclick="toggleOwnerLogin()">
-            <i class="fa-solid fa-user-shield"></i> Panel Pemilik Joran
-        </button>
+        <div style="font-weight: 800; color: var(--gold);"><i class="fa-solid fa-fish"></i> LE LANG ROD REALTIME</div>
+        <button class="btn-sm" style="border-color: var(--gold); color: var(--gold);" onclick="loginAdmin()">Panel Control Admin</button>
     </div>
 
-    <!-- OWNER PANEL (CONTROL LEBAR) -->
-    <div class="owner-panel" id="ownerPanel">
-        <h3 style="color: var(--accent-gold); margin-bottom: 10px;">
-            <i class="fa-solid fa-sliders"></i> Panel Pengendali Pemilik Joran (Admin)
-        </h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted);">
-            Anda terverifikasi sebagai Pemilik Item. Anda bisa melacak ID Roblox asli penawar dan mengontrol durasi lelang.
-        </p>
-        <div class="owner-controls">
-            <button class="btn-owner-action" onclick="addTime(300)">+ Tambah 5 Menit</button>
-            <button class="btn-owner-action" onclick="stopAuction()" style="background: var(--accent-red); color: white;">Hentikan Lelang Instan</button>
+    <!-- PANEL ADMIN REALTIME -->
+    <div class="admin-panel" id="adminPanel">
+        <h4 style="color: var(--red); margin-bottom: 10px;"><i class="fa-solid fa-user-shield"></i> Panel Kontrol Realtime Owner</h4>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn-sm" onclick="setTimerMinutes(5)">Reset Timer Ke 5 Menit Global</button>
+            <button class="btn-sm" onclick="setTimerMinutes(10)">Set Timer 10 Menit Global</button>
+            <button class="btn-sm" style="background: var(--red);" onclick="clearBids()">Reset Semua Bid</button>
         </div>
     </div>
 
-    <!-- KARTU KIRI: GALERI GAMBAR & SPESIFIKASI JORAN -->
+    <!-- KIRI: PRODUK -->
     <div class="card">
-        <span class="badge-rarity">Mythic / Secret</span>
-        
-        <div class="main-img-container">
-            <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80" id="mainImg" class="main-img" alt="Joran Rod">
-        </div>
-
-        <div class="gallery-thumbs">
-            <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=200&q=80" class="thumb active" onclick="changeImage(this)">
-            <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=200&q=80" class="thumb" onclick="changeImage(this)">
-            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=200&q=80" class="thumb" onclick="changeImage(this)">
-        </div>
-
-        <h1 class="product-title">Poseidon Trident Carbon Rod 240cm</h1>
-        <p style="color: var(--text-muted); font-size: 0.9rem;">
-            Joran langka edisi terbatas. Memiliki sensitivitas tinggi dengan ketahanan daya tarik max-load ekstrem di dalam game.
-        </p>
-
-        <div class="specs-grid">
-            <div class="spec-item"><i class="fa-solid fa-shield"></i> Material: Full Carbon 40T</div>
-            <div class="spec-item"><i class="fa-solid fa-weight-hanging"></i> Max Drag: 25 Kg</div>
-            <div class="spec-item"><i class="fa-solid fa-ruler"></i> Panjang: 2.4 Meter</div>
-            <div class="spec-item"><i class="fa-solid fa-gem"></i> Mint Condition: 100%</div>
-        </div>
+        <img src="https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80" style="width:100%; height:250px; object-fit:cover; border-radius:10px; margin-bottom:15px;">
+        <h2>Poseidon Trident Carbon Rod 240cm</h2>
+        <p style="color: #8d99ae; font-size: 0.85rem; margin-top: 5px;">Kondisi Perfect | Rarity Mythic | Anti Scam Protection</p>
     </div>
 
-    <!-- KARTU KANAN: TIMER, STATUS BID, & VERIFIKASI -->
+    <!-- KANAN: LE LANG REALTIME -->
     <div class="card">
-        <div class="timer-banner">
-            <small style="color: var(--text-muted);">SISA WAKTU LELANG</small>
-            <div class="timer-digits" id="timerDisplay">00:05:00</div>
+        <div class="timer-box">
+            <small style="color: #8d99ae;">SISA WAKTU (SINKRON GLOBAL)</small>
+            <div class="timer-val" id="timer">--:--</div>
         </div>
 
         <div class="price-box">
-            <small style="color: var(--text-muted);">TAWARAN TERTINGGI SAAT INI</small>
-            <div class="price-amount" id="highestBidDisplay">Rp 500.000</div>
-            <small id="highestBidderDisplay" style="color: var(--accent-gold);">Oleh: Belum ada penawaran</small>
+            <small style="color: #8d99ae;">BID TERTINGGI</small>
+            <div class="price-val" id="highestPrice">Rp 500.000</div>
+            <small id="highestBidder" style="color: var(--gold);">Oleh: Belum Ada</small>
         </div>
 
-        <!-- FORM VERIFIKASI ROBLOX -->
-        <div class="verify-box" id="verifySection">
-            <p style="font-size: 0.85rem; margin-bottom: 10px;">
-                <i class="fa-solid fa-qrcode"></i> <strong>Verifikasi Roblox (Anti-Scam)</strong><br>
-                Masukkan Kode Unik Roblox Anda:
+        <!-- FORM SCAN / LOGIN ROBLOX -->
+        <div class="verify-card" id="verifyBox">
+            <p style="font-size: 0.8rem; margin-bottom: 10px;">
+                <i class="fa-solid fa-qrcode"></i> <strong>Scan Barcode Roblox Profil Anda / Masukkan Link Profil</strong>
             </p>
-            <div class="form-group">
-                <input type="text" id="authCode" placeholder="Contoh Kode: RBX-9982">
-            </div>
-            <button class="btn-action" style="background: var(--accent-blue);" onclick="verifyRoblox()">Verifikasi Identitas</button>
+            <input type="text" id="robloxInput" placeholder="Username / Link Profil Roblox">
+            <button class="btn btn-blue" onclick="verifyPlayer()">Verifikasi & Masuk War Bid</button>
         </div>
 
         <!-- FORM BIDDING -->
-        <div id="bidSection" style="display: none;">
-            <div class="form-group">
-                <input type="number" id="bidInput" placeholder="Masukkan Nominal Bid (Rp)">
+        <div id="bidBox" style="display: none;">
+            <div class="bid-controls">
+                <button class="btn-sm" onclick="adjustAmount(-10000)">-10k</button>
+                <button class="btn-sm" onclick="adjustAmount(10000)">+10k</button>
+                <button class="btn-sm" onclick="adjustAmount(50000)">+50k</button>
+                <button class="btn-sm" onclick="adjustAmount(100000)">+100k</button>
             </div>
 
-            <div class="quick-bids">
-                <button class="btn-quick" onclick="addQuickBid(10000)">+10k</button>
-                <button class="btn-quick" onclick="addQuickBid(50000)">+50k</button>
-                <button class="btn-quick" onclick="addQuickBid(100000)">+100k</button>
-            </div>
+            <input type="number" id="bidAmountInput" placeholder="Nominal Bid Anda">
 
-            <div class="checkbox-container">
+            <div style="display: flex; gap: 8px; align-items: center; font-size: 0.8rem; margin-bottom: 10px; color: #8d99ae;">
                 <input type="checkbox" id="anonCheck">
-                <label for="anonCheck">Sembunyikan Nama di Publik (Mode Anonim)</label>
+                <label for="anonCheck">Sembunyikan Identitas di Publik (Mode Anonim)</label>
             </div>
 
-            <button class="btn-action" onclick="submitBid()">KIRIM TAWARAN TERTINGGI</button>
+            <button class="btn btn-green" onclick="submitBid()">KIRIM PENAWARAN</button>
         </div>
 
-        <!-- RIWAYAT PENAWARAN -->
-        <h4 style="margin-top: 20px; font-size: 0.9rem; color: var(--text-muted);">Riwayat Penawaran Realtime</h4>
-        <ul class="history-list" id="bidHistory"></ul>
+        <h4 style="margin-top: 15px; font-size: 0.85rem; color: #8d99ae;">Riwayat Penawaran & Player War:</h4>
+        <ul class="history-list" id="historyList"></ul>
     </div>
 </div>
 
 <script>
-    // DATA STATE LELANG LOKAL (SIMULASI REALTIME)
-    let highestBid = 500000;
-    let highestBidder = null;
+    // 1. CONFIG FIREBASE (Ganti dengan konfigurasi Firebase milik Anda)
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // SPREADSHEET URL (Ganti dengan URL Google Apps Script Anda)
+    const SPREADSHEET_WEB_APP_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+
     let currentUser = null;
-    let isOwnerLoggedIn = false;
-    let timeRemaining = 300; // 5 menit
+    let targetEndTime = 0;
+    let highestAmount = 500000;
+    let isAdmin = false;
 
-    // GALERI GAMBAR
-    function changeImage(element) {
-        document.getElementById("mainImg").src = element.src;
-        document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-        element.classList.add('active');
-    }
+    // LISTEN DATA REALTIME FIREBASE
+    db.ref('auction_state').on('value', snapshot => {
+        const data = snapshot.val();
+        if(!data) return;
 
-    // TIMER
-    const timerInterval = setInterval(() => {
-        if (timeRemaining <= 0) {
-            clearInterval(timerInterval);
-            document.getElementById("timerDisplay").innerText = "SELESAI";
-            document.getElementById("bidSection").style.display = "none";
+        targetEndTime = data.targetEndTime || Date.now() + 300000;
+        highestAmount = data.highestAmount || 500000;
+
+        document.getElementById("highestPrice").innerText = `Rp ${highestAmount.toLocaleString('id-ID')}`;
+        
+        if(data.highestBidder) {
+            const nameShow = data.highestBidder.isAnon ? "User_*** (Anonim)" : data.highestBidder.username;
+            document.getElementById("highestBidder").innerText = `Oleh: ${nameShow}`;
+        }
+    });
+
+    // LISTEN HISTORY BID & BAD-ACTOR KICK REALTIME
+    db.ref('bids').on('value', snapshot => {
+        const list = document.getElementById("historyList");
+        list.innerHTML = "";
+        
+        snapshot.forEach(child => {
+            const key = child.key;
+            const b = child.val();
+            const li = document.createElement("li");
+            li.className = "history-item";
+
+            const namePublic = b.isAnon ? "User_*** (Anonim)" : b.username;
+            
+            let kickBtnHTML = "";
+            if(isAdmin) {
+                // Admin bisa lihat data asli walau anonim & tombol Kick
+                kickBtnHTML = `<button onclick="kickPlayer('${key}')" style="background:red; color:white; border:none; padding:3px 6px; border-radius:4px; font-size:0.7rem; cursor:pointer; margin-left:5px;">Kick Bid</button>`;
+            }
+
+            li.innerHTML = `
+                <div>
+                    <strong>${namePublic}</strong> ${isAdmin ? `<small>(${b.username})</small>` : ''}
+                    ${kickBtnHTML}
+                </div>
+                <span style="color: var(--green); font-weight: bold;">Rp ${parseInt(b.amount).toLocaleString('id-ID')}</span>
+            `;
+            list.insertBefore(li, list.firstChild);
+        });
+    });
+
+    // GLOBAL COUNTDOWN TIMER SINKRON
+    setInterval(() => {
+        const now = Date.now();
+        const diff = targetEndTime - now;
+
+        if (diff <= 0) {
+            document.getElementById("timer").innerText = "SELESAI";
+            document.getElementById("bidBox").style.display = "none";
             return;
         }
 
-        timeRemaining--;
-        let h = Math.floor(timeRemaining / 3600);
-        let m = Math.floor((timeRemaining % 3600) / 60);
-        let s = timeRemaining % 60;
-
-        document.getElementById("timerDisplay").innerText = 
-            `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        let m = Math.floor(diff / 60000);
+        let s = Math.floor((diff % 60000) / 1000);
+        document.getElementById("timer").innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     }, 1000);
 
-    // VERIFIKASI ROBLOX
-    function verifyRoblox() {
-        const code = document.getElementById("authCode").value.trim();
-        if(!code) { alert("Masukkan kode verifikasi!"); return; }
+    // VERIFIKASI USER ROBLOX
+    function verifyPlayer() {
+        const val = document.getElementById("robloxInput").value.trim();
+        if(!val) { alert("Masukkan Username atau Scan Profil Roblox!"); return; }
 
         currentUser = {
-            displayName: "Player_" + code.substring(0, 4),
-            username: "RobloxUser_" + code,
-            robloxId: "ID-" + Math.floor(100000 + Math.random() * 900000)
+            username: val,
+            verifiedAt: new Date().toISOString()
         };
 
-        alert(`Terverifikasi sebagai ${currentUser.displayName}`);
-        document.getElementById("verifySection").style.display = "none";
-        document.getElementById("bidSection").style.display = "block";
+        document.getElementById("verifyBox").style.display = "none";
+        document.getElementById("bidBox").style.display = "block";
+        document.getElementById("bidAmountInput").value = highestAmount + 10000;
     }
 
-    // QUICK BID
-    function addQuickBid(amount) {
-        let currentInput = parseInt(document.getElementById("bidInput").value) || highestBid;
-        document.getElementById("bidInput").value = currentInput + amount;
+    function adjustAmount(val) {
+        let current = parseInt(document.getElementById("bidAmountInput").value) || highestAmount;
+        let res = current + val;
+        if(res < 0) res = 0;
+        document.getElementById("bidAmountInput").value = res;
     }
 
-    // SUBMIT BID
+    // SUBMIT BID REALTIME
     function submitBid() {
         if(!currentUser) return;
+        const amount = parseInt(document.getElementById("bidAmountInput").value);
+        const isAnon = document.getElementById("anonCheck").checked;
 
-        const val = parseInt(document.getElementById("bidInput").value);
-        if(isNaN(val) || val <= highestBid) {
-            alert(`Bid harus lebih besar dari Rp ${highestBid.toLocaleString('id-ID')}`);
+        if(isNaN(amount) || amount <= highestAmount) {
+            alert(`Bid harus lebih besar dari Rp ${highestAmount.toLocaleString('id-ID')}`);
             return;
         }
 
-        highestBid = val;
-        const isAnon = document.getElementById("anonCheck").checked;
-        
-        highestBidder = {
-            ...currentUser,
-            isAnon: isAnon
+        const bidData = {
+            username: currentUser.username,
+            amount: amount,
+            isAnon: isAnon,
+            timestamp: Date.now()
         };
 
-        // UPDATE UI
-        document.getElementById("highestBidDisplay").innerText = `Rp ${highestBid.toLocaleString('id-ID')}`;
-        
-        const publicName = isAnon ? "User_*** (Anonim)" : `${currentUser.displayName} (@${currentUser.username})`;
-        document.getElementById("highestBidderDisplay").innerText = `Oleh: ${publicName}`;
+        // 1. Save to Firebase Realtime
+        db.ref('bids').push(bidData);
+        db.ref('auction_state').update({
+            highestAmount: amount,
+            highestBidder: bidData
+        });
 
-        // TAMBAH RIWAYAT
-        const historyList = document.getElementById("bidHistory");
-        const li = document.createElement("li");
-        li.className = "history-item";
-        li.innerHTML = `<span><strong>${publicName}</strong></span> <span style="color: var(--accent-green)">Rp ${val.toLocaleString('id-ID')}</span>`;
-        historyList.insertBefore(li, historyList.firstChild);
-
-        document.getElementById("bidInput").value = "";
-    }
-
-    // LOGIN PEMILIK JORAN (ADMIN)
-    function toggleOwnerLogin() {
-        if(isOwnerLoggedIn) {
-            isOwnerLoggedIn = false;
-            document.getElementById("ownerPanel").classList.remove("active");
-            alert("Keluar dari Panel Pemilik.");
-            return;
+        // 2. Save to Google Sheets (Rekap War Bid)
+        if(SPREADSHEET_WEB_APP_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
+            fetch(SPREADSHEET_WEB_APP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bidData)
+            });
         }
 
-        const pin = prompt("Masukkan PIN Pemilik Joran (Default: 1234):");
+        alert("Penawaran Berhasil Dikirim!");
+    }
+
+    // ADMIN CONTROL REALTIME
+    function loginAdmin() {
+        const pin = prompt("Masukkan PIN Admin:");
         if(pin === "1234") {
-            isOwnerLoggedIn = true;
-            document.getElementById("ownerPanel").classList.add("active");
-            alert("Login Pemilik Berhasil!");
+            isAdmin = true;
+            document.getElementById("adminPanel").classList.add("active");
+            alert("Login Admin Berhasil! Anda memiliki kontrol penuh.");
+            db.ref('bids').get(); // Refresh UI
         } else {
             alert("PIN Salah!");
         }
     }
 
-    // CONTROL PEMILIK
-    function addTime(seconds) {
-        timeRemaining += seconds;
-        alert("Waktu lelang berhasil ditambah!");
+    function setTimerMinutes(mins) {
+        const newEndTime = Date.now() + (mins * 60 * 1000);
+        db.ref('auction_state').update({ targetEndTime: newEndTime });
     }
 
-    function stopAuction() {
-        timeRemaining = 0;
-        alert("Lelang telah dihentikan secara instan oleh Pemilik Joran.");
+    function clearBids() {
+        if(confirm("Yakin ingin menghapus seluruh riwayat bid?")) {
+            db.ref('bids').remove();
+            db.ref('auction_state').update({ highestAmount: 500000, highestBidder: null });
+        }
+    }
+
+    function kickPlayer(bidKey) {
+        if(confirm("Tendang player/hapus penawaran scam ini?")) {
+            db.ref(`bids/${bidKey}`).remove();
+        }
     }
 </script>
-
 </body>
 </html>
